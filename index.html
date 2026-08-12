@@ -1080,6 +1080,7 @@
     { id: 'antecipacao', nome: 'Antecipação', cor: '#7C3AED' },
     { id: 'captacao',    nome: 'Captação',    cor: '#065F46' },
     { id: 'lancamento',  nome: 'Lançamento',  cor: '#C2410C' },
+    { id: 'eventos',     nome: 'Eventos',     cor: '#0369A1' },
   ];
 
   // Responsáveis disponíveis e sua cor de badge.
@@ -1127,7 +1128,7 @@
   let tasks = loadTasks();
 
   let activeStatus = 'Todas';        // 'Todas' | 'A fazer' | 'Em andamento' | 'Concluído'
-  let activeView = 'calendar';       // 'calendar' | 'antecipacao' | 'captacao' | 'lancamento'
+  let activeView = 'calendar';       // 'calendar' | 'antecipacao' | 'captacao' | 'lancamento' | 'eventos'
 
   let calYear = TODAY_REF.year;
   let calMonth = TODAY_REF.month;
