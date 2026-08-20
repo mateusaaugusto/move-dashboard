@@ -488,6 +488,128 @@
   }
 
   /* ============================================================
+     KAN BAN VIEW
+  ============================================================ */
+  .kanban-toolbar {
+    margin-bottom: 6px;
+  }
+
+  .kanban-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .kanban-subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  .kanban-board {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .kanban-column {
+    flex: 1 1 0;
+    min-width: 260px;
+    background: var(--card-soft);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .kanban-column.drag-over {
+    border-color: var(--accent);
+    background: rgba(249,115,22,0.06);
+  }
+
+  .kanban-column-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .kanban-column-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .kanban-column-count {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 2px 9px;
+    border-radius: 999px;
+  }
+
+  .kanban-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 40px;
+  }
+
+  .kanban-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 12px;
+    cursor: grab;
+    box-shadow: 0 1px 2px rgba(120,72,22,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .kanban-card:active { cursor: grabbing; }
+  .kanban-card.dragging { opacity: 0.4; }
+
+  .kanban-card-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    word-break: break-word;
+  }
+
+  .kanban-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .kanban-card-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 2px;
+    margin-top: -4px;
+  }
+
+  .kanban-column-add {
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 9px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color .15s ease, color .15s ease;
+  }
+  .kanban-column-add:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ============================================================
      CALENDAR VIEW
   ============================================================ */
   .calendar-toolbar {
@@ -967,6 +1089,17 @@
     ============================================================ -->
     <main class="content">
 
+      <!-- ---------- KAN BAN ---------- -->
+      <div id="kanbanView" style="display:none;">
+        <div class="kanban-toolbar">
+          <div>
+            <div class="kanban-title">Kan Ban</div>
+            <div class="kanban-subtitle">Tarefas diárias da MOVE</div>
+          </div>
+        </div>
+        <div class="kanban-board" id="kanbanBoard"></div>
+      </div>
+
       <!-- ---------- CALENDÁRIO ---------- -->
       <div id="calendarView">
         <div class="calendar-toolbar">
@@ -1081,6 +1214,7 @@
     { id: 'captacao',    nome: 'Captação',    cor: '#065F46' },
     { id: 'lancamento',  nome: 'Lançamento',  cor: '#C2410C' },
     { id: 'eventos',     nome: 'Eventos',     cor: '#0369A1' },
+    { id: 'kanban',      nome: 'Kan Ban',     cor: '#BE185D' },
   ];
 
   // Responsáveis disponíveis e sua cor de badge.
@@ -1128,7 +1262,7 @@
   let tasks = loadTasks();
 
   let activeStatus = 'Todas';        // 'Todas' | 'A fazer' | 'Em andamento' | 'Concluído'
-  let activeView = 'calendar';       // 'calendar' | 'antecipacao' | 'captacao' | 'lancamento' | 'eventos'
+  let activeView = 'calendar';       // 'kanban' | 'calendar' | 'antecipacao' | 'captacao' | 'lancamento' | 'eventos'
 
   let calYear = TODAY_REF.year;
   let calMonth = TODAY_REF.month;
@@ -1195,7 +1329,22 @@
     const nav = document.getElementById('mainNav');
     nav.innerHTML = '';
 
-    // aba Calendário — sempre a primeira
+    // aba Kan Ban — sempre a primeira, acima do Calendário
+    const kanbanTasks = tasks.filter(t => t.categoria === 'kanban');
+    const kanbanDone = kanbanTasks.filter(t => t.status === 'Concluído').length;
+    const kanbanItem = document.createElement('button');
+    kanbanItem.className = 'nav-item' + (activeView === 'kanban' ? ' active' : '');
+    kanbanItem.innerHTML = `
+      <span class="nav-icon calendar-icon">🗂️</span>
+      <span class="nav-text">
+        <div class="nav-name">Kan Ban</div>
+        <div class="nav-count">${kanbanDone}/${kanbanTasks.length} concluídas</div>
+      </span>
+    `;
+    kanbanItem.addEventListener('click', () => { activeView = 'kanban'; renderAll(); });
+    nav.appendChild(kanbanItem);
+
+    // aba Calendário — logo depois
     const calItem = document.createElement('button');
     calItem.className = 'nav-item' + (activeView === 'calendar' ? ' active' : '');
     calItem.innerHTML = `
@@ -1208,8 +1357,8 @@
     calItem.addEventListener('click', () => { activeView = 'calendar'; renderAll(); });
     nav.appendChild(calItem);
 
-    // abas de categoria
-    CATEGORIES.forEach(cat => {
+    // abas de categoria (Kan Ban tem view própria, não entra nesse loop)
+    CATEGORIES.filter(cat => cat.id !== 'kanban').forEach(cat => {
       const catTasks = tasks.filter(t => t.categoria === cat.id);
       const done = catTasks.filter(t => t.status === 'Concluído').length;
 
@@ -1259,13 +1408,19 @@
   function renderViews() {
     const calendarView = document.getElementById('calendarView');
     const categoriesView = document.getElementById('categoriesView');
+    const kanbanView = document.getElementById('kanbanView');
+
+    calendarView.style.display = 'none';
+    categoriesView.style.display = 'none';
+    kanbanView.style.display = 'none';
 
     if (activeView === 'calendar') {
       calendarView.style.display = '';
-      categoriesView.style.display = 'none';
       renderCalendar();
+    } else if (activeView === 'kanban') {
+      kanbanView.style.display = '';
+      renderKanban();
     } else {
-      calendarView.style.display = 'none';
       categoriesView.style.display = '';
       renderCategoryView(activeView);
     }
@@ -1412,6 +1567,128 @@
 
     row.appendChild(actions);
     return row;
+  }
+
+  /* ---------- KAN BAN ---------- */
+
+  function renderKanban() {
+    const board = document.getElementById('kanbanBoard');
+    board.innerHTML = '';
+
+    const kanbanTasks = tasks.filter(t => t.categoria === 'kanban').filter(taskMatchesFilters);
+
+    STATUS_OPTIONS.forEach(status => {
+      const colTasks = kanbanTasks.filter(t => t.status === status);
+
+      const column = document.createElement('div');
+      column.className = 'kanban-column';
+      column.dataset.status = status;
+
+      const header = document.createElement('div');
+      header.className = 'kanban-column-header';
+      header.innerHTML = `
+        <span class="kanban-column-title">${status}</span>
+        <span class="kanban-column-count">${colTasks.length}</span>
+      `;
+      column.appendChild(header);
+
+      const cardsWrap = document.createElement('div');
+      cardsWrap.className = 'kanban-cards';
+      colTasks.forEach(task => cardsWrap.appendChild(renderKanbanCard(task)));
+      column.appendChild(cardsWrap);
+
+      const addBtn = document.createElement('button');
+      addBtn.className = 'kanban-column-add';
+      addBtn.textContent = '+ Adicionar tarefa';
+      addBtn.addEventListener('click', () => openDrawer('create', null, { categoria: 'kanban', status: status }));
+      column.appendChild(addBtn);
+
+      column.addEventListener('dragover', (ev) => {
+        ev.preventDefault();
+        column.classList.add('drag-over');
+      });
+      column.addEventListener('dragleave', () => {
+        column.classList.remove('drag-over');
+      });
+      column.addEventListener('drop', (ev) => {
+        ev.preventDefault();
+        column.classList.remove('drag-over');
+        const taskId = ev.dataTransfer.getData('text/plain');
+        const task = tasks.find(t => t.id === taskId);
+        if (task && task.status !== status) {
+          task.status = status;
+          saveTasks();
+          renderAll();
+        }
+      });
+
+      board.appendChild(column);
+    });
+  }
+
+  function renderKanbanCard(task) {
+    const card = document.createElement('div');
+    card.className = 'kanban-card';
+    card.draggable = true;
+    card.dataset.taskId = task.id;
+
+    card.addEventListener('dragstart', (ev) => {
+      ev.dataTransfer.setData('text/plain', task.id);
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+
+    const name = document.createElement('div');
+    name.className = 'kanban-card-name';
+    name.textContent = task.nome;
+    card.appendChild(name);
+
+    const meta = document.createElement('div');
+    meta.className = 'kanban-card-meta';
+
+    const badge = document.createElement('span');
+    badge.className = 'task-badge';
+    badge.textContent = task.responsavel;
+    badge.style.background = RESPONSAVEIS[task.responsavel] || '#475569';
+    meta.appendChild(badge);
+
+    const priority = document.createElement('span');
+    priority.className = 'task-priority ' + (task.prioridade || 'Média').toLowerCase().replace('é', 'e');
+    priority.textContent = task.prioridade || 'Média';
+    meta.appendChild(priority);
+
+    if (task.data) {
+      const dateLabel = document.createElement('span');
+      dateLabel.className = 'task-date-label';
+      dateLabel.textContent = formatDateLabel(task.data);
+      meta.appendChild(dateLabel);
+    }
+
+    card.appendChild(meta);
+
+    const actions = document.createElement('div');
+    actions.className = 'kanban-card-actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'task-icon-btn';
+    editBtn.innerHTML = '✎';
+    editBtn.title = 'Editar tarefa';
+    editBtn.addEventListener('click', () => openDrawer('edit', task.id));
+    actions.appendChild(editBtn);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'task-icon-btn danger';
+    delBtn.innerHTML = '✕';
+    delBtn.title = 'Remover tarefa';
+    delBtn.addEventListener('click', () => {
+      tasks = tasks.filter(t => t.id !== task.id);
+      saveTasks();
+      renderAll();
+    });
+    actions.appendChild(delBtn);
+
+    card.appendChild(actions);
+    return card;
   }
 
   /* ---------- CALENDÁRIO ---------- */
@@ -1565,7 +1842,7 @@
       fieldResponsavel.value = 'Mateus';
       fieldPrioridade.value = 'Média';
       fieldData.value = defaults.data || '';
-      fieldStatus.value = 'A fazer';
+      fieldStatus.value = defaults.status || 'A fazer';
       fieldDescricao.value = '';
     }
 
